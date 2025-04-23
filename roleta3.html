@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Roleta da Bolsa</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to bottom, #ff0000, #990000);
+      color: white;
+      text-align: center;
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    .container {
+      padding-top: 60px;
+    }
+
+    input,
+    select,
+    button {
+      padding: 12px;
+      font-size: 18px;
+      border: none;
+      border-radius: 8px;
+      margin: 10px;
+    }
+
+    input {
+      width: 250px;
+      /* Aumentei a largura aqui */
+    }
+
+    button {
+      background-color: #fff;
+      color: #c00;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    #girarBtn {
+      display: block;
+      margin: 20px auto 0 auto;
+    }
+
+    #logo {
+      width: 100px;
+      margin-top: 20px;
+    }
+
+    #roletaContainer {
+      position: relative;
+      width: 300px;
+      height: 300px;
+      margin: 30px auto;
+      display: none;
+      z-index: 10;
+    }
+
+    #roleta {
+      width: 100%;
+      height: 100%;
+      background-image: url('assets\\images\\roleta.png');
+      background-size: cover;
+      border-radius: 50%;
+      transition: transform 10s ease-out;
+    }
+
+    #ponteiro {
+      position: absolute;
+      top: -40px;
+      left: 50%;
+      transform: translateX(-50%) rotate(180deg);
+      width: 0;
+      height: 0;
+      border-left: 20px solid transparent;
+      border-right: 20px solid transparent;
+      border-bottom: 30px solid yellow;
+    }
+
+    #overlay,
+    #mensagemFinal,
+    #novaChance,
+    #pegarBolsa {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 50%;
+      height: 50%;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 20px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      color: #c00;
+      font-size: 24px;
+      padding: 20px;
+      z-index: 20;
+      transition: all 0.3s ease-in-out;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    }
+
+    .closeBtn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      font-size: 30px;
+      color: #c00;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    #cursoArea,
+    #mensagem,
+    #extraBtn {
+      margin-top: 30px;
+    }
+
+    @keyframes fadeScaleIn {
+      0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.8);
+      }
+
+      100% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+    }
+
+    .animated-fade {
+      animation: fadeScaleIn 0.4s ease-out forwards;
+    }
+
+    #pegarBolsa {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    #pegarBolsa button {
+      background-color: #c00;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+
+  <img src="assets\images\logotipo.png" alt="Logo" id="logo">
+
+  <div class="container" id="codigoArea">
+    <h2>Digite seu código para liberar a roleta:</h2>
+    <input type="password" id="codigoInput" placeholder="Digite o código">
+    <br>
+    <button onclick="liberarRoleta()">Liberar</button>
+  </div>
+
+  <div id="cursoArea" style="display:none;">
+    <h2>Escolha seu curso</h2>
+    <select id="cursoSelect">
+      <option value="Administração Executiva">Administração Executiva</option>
+      <option value="Alongamento de Unhas">Alongamento de Unhas</option>
+      <option value="Alongamento de Cílios">Alongamento de Cílios</option>
+      <option value="Atendente de Farmácia">Atendente de Farmácia</option>
+      <option value="Barbeiro Profissional">Barbeiro Profissional</option>
+      <option value="Confeiteiro">Confeitaria</option>
+      <option value="Design de Sobrancelhas">Design de Sobrancelhas</option>
+      <option value="Design Gráfico">Design Gráfico</option>
+      <option value="Elétrica">Elétrica</option>
+      <option value="Informática">Informática</option>
+      <option value="Inglês">Inglês</option>
+      <option value="Manutenção de Celulares">Manutenção de Celulares</option>
+      <option value="Operador de Caixa">Operador de Caixa</option>
+      <option value="Secretariado Jurídico">Secretariado Jurídico</option>
+      <option value="Web Design">Web Design</option>
+    </select>
+    <br>
+    <button onclick="primeiraRodada()">Ir para a roleta</button>
+  </div>
+
+  <div id="roletaContainer">
+    <div id="ponteiro"></div>
+    <div id="roleta"></div>
+    <button id="girarBtn" style="margin-top: 20px;" onclick="girar()">Girar Roleta</button>
+  </div>
+
+  <div id="overlay">
+    <div class="closeBtn" onclick="fecharMensagem()">✖</div>
+    <div id="mensagemOverlay"></div>
+  </div>
+
+  <div id="novaChance">
+    <div class="closeBtn" onclick="confirmarIndicacao()">✖</div>
+    <p>Indique <b>3 amigos</b> para ganhar uma nova chance!</p>
+    <button onclick="confirmarIndicacao()">Confirmar Indicação</button>
+  </div>
+
+  <div id="mensagemFinal">
+    <div class="closeBtn" onclick="mostrarBolsa()">✖</div>
+    <p id="textoFinal"></p>
+  </div>
+
+  <div id="pegarBolsa">
+    <p>Parabéns! Clique abaixo para garantir sua bolsa:</p>
+    <button onclick="alert('Bolsa resgatada!')">PEGAR BOLSA</button>
+  </div>
+
+  <audio id="somRoleta" src="assets\audio\roleta.mp3"></audio>
+  <audio id="somGanhou1" src="ganhou1.mp3"></audio>
+  <audio id="somGanhou2" src="ganhou2.mp3"></audio>
+
+  <script>
+    let etapa = 1;
+    let roleta = document.getElementById("roleta");
+    let cursoSelect = document.getElementById("cursoSelect");
+    let overlay = document.getElementById("overlay");
+    let mensagemOverlay = document.getElementById("mensagemOverlay");
+    let novaChance = document.getElementById("novaChance");
+    let mensagemFinal = document.getElementById("mensagemFinal");
+    let textoFinal = document.getElementById("textoFinal");
+    let pegarBolsa = document.getElementById("pegarBolsa");
+
+    let somRoleta = document.getElementById("somRoleta");
+    let somGanhou1 = document.getElementById("somGanhou1");
+    let somGanhou2 = document.getElementById("somGanhou2");
+
+   /*  function liberarRoleta() {
+      const codigo = document.getElementById("codigoInput").value.trim();
+      if (codigo === "123456") {
+        document.getElementById("codigoArea").style.display = "none";
+        document.getElementById("cursoArea").style.display = "block";
+      } else {
+        alert("Código inválido!");
+      }
+    } */
+    function liberarRoleta() {
+    const codigo = document.getElementById("codigoInput").value.trim();
+    document.getElementById("codigoArea").style.display = "none";
+    document.getElementById("cursoArea").style.display = "block";
+}
+
+    function primeiraRodada() {
+      document.getElementById("cursoArea").style.display = "none";
+      document.getElementById("roletaContainer").style.display = "block";
+    }
+
+    function girar() {
+      somRoleta.play();
+      document.getElementById("girarBtn").style.display = "none";
+      roleta.style.transition = "none";
+      roleta.style.transform = "rotate(0deg)";
+      setTimeout(() => {
+        let graus = etapa === 1 ? 3600 + 45 : 7200 + 135;
+        roleta.style.transition = "transform 10s ease-out";
+        roleta.style.transform = `rotate(${graus}deg)`;
+
+        setTimeout(() => {
+          if (etapa === 1) {
+            somGanhou1.play();
+            mensagemOverlay.innerHTML = "🎉 Você ganhou uma bolsa de <b>R$ 180</b> na matrícula!";
+            overlay.style.display = "flex";
+            overlay.classList.add("animated-fade");
+          } else {
+            somGanhou2.play();
+            textoFinal.innerHTML = `🎉 BOLSA MÁXIMA! De <s>R$ 290</s> por <b>R$ 99,99</b> no curso de <b>${cursoSelect.value}</b>!`;
+            mensagemFinal.style.display = "flex";
+            mensagemFinal.classList.add("animated-fade");
+          }
+        }, 10100);
+      }, 50);
+    }
+
+    function fecharMensagem() {
+      overlay.style.display = "none";
+      novaChance.style.display = "flex";
+      novaChance.classList.add("animated-fade");
+    }
+
+    function confirmarIndicacao() {
+      novaChance.style.display = "none";
+      etapa = 2;
+      document.getElementById("girarBtn").style.display = "block";
+      roleta.style.transition = "none";
+      roleta.style.transform = "rotate(0deg)";
+    }
+
+    function mostrarBolsa() {
+      mensagemFinal.style.display = "none";
+      pegarBolsa.style.display = "flex";
+      pegarBolsa.classList.add("animated-fade");
+    }
+  </script>
+</body>
+
+</html>
