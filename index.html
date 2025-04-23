@@ -3,7 +3,9 @@
 
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Roleta da Bolsa</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
   <style>
     * {
       margin: 0;
@@ -22,7 +24,7 @@
     }
 
     .container {
-      padding-top: 60px;
+      padding-top: 40px;
     }
 
     input,
@@ -33,11 +35,8 @@
       border: none;
       border-radius: 8px;
       margin: 10px;
-    }
-
-    input {
-      width: 250px;
-      /* Aumentei a largura aqui */
+      width: 90%;
+      max-width: 300px;
     }
 
     button {
@@ -45,6 +44,11 @@
       color: #c00;
       font-weight: bold;
       cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    button:active {
+      transform: scale(0.95);
     }
 
     #girarBtn {
@@ -53,14 +57,14 @@
     }
 
     #logo {
-      width: 100px;
+      width: 80px;
       margin-top: 20px;
     }
 
     #roletaContainer {
       position: relative;
-      width: 300px;
-      height: 300px;
+      width: 250px;
+      height: 250px;
       margin: 30px auto;
       display: none;
       z-index: 10;
@@ -77,14 +81,14 @@
 
     #ponteiro {
       position: absolute;
-      top: -40px;
+      top: -30px;
       left: 50%;
       transform: translateX(-50%) rotate(180deg);
       width: 0;
       height: 0;
-      border-left: 20px solid transparent;
-      border-right: 20px solid transparent;
-      border-bottom: 30px solid yellow;
+      border-left: 15px solid transparent;
+      border-right: 15px solid transparent;
+      border-bottom: 20px solid yellow;
     }
 
     #overlay,
@@ -95,36 +99,40 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      width: 50%;
-      height: 50%;
+      width: 90%;
+      max-width: 500px;
+      height: auto;
+      min-height: 40%;
       background: rgba(255, 255, 255, 0.95);
-      border-radius: 20px;
+      border-radius: 15px;
       display: none;
       align-items: center;
       justify-content: center;
       flex-direction: column;
       color: #c00;
-      font-size: 24px;
-      padding: 20px;
+      font-size: 20px;
+      padding: 25px;
       z-index: 20;
       transition: all 0.3s ease-in-out;
-      box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+      text-align: center;
     }
 
     .closeBtn {
       position: absolute;
-      top: 20px;
-      right: 20px;
-      font-size: 30px;
+      top: 15px;
+      right: 15px;
+      font-size: 25px;
       color: #c00;
       cursor: pointer;
       font-weight: bold;
+      padding: 5px;
     }
 
     #cursoArea,
     #mensagem,
     #extraBtn {
-      margin-top: 30px;
+      margin-top: 20px;
     }
 
     @keyframes fadeScaleIn {
@@ -132,7 +140,6 @@
         opacity: 0;
         transform: translate(-50%, -50%) scale(0.8);
       }
-
       100% {
         opacity: 1;
         transform: translate(-50%, -50%) scale(1);
@@ -154,6 +161,49 @@
       color: white;
       font-weight: bold;
       cursor: pointer;
+      margin-top: 15px;
+    }
+
+    @media (max-width: 480px) {
+      .container {
+        padding-top: 30px;
+      }
+
+      h2 {
+        font-size: 1.2rem;
+        padding: 0 10px;
+      }
+
+      #roletaContainer {
+        width: 220px;
+        height: 220px;
+      }
+
+      #ponteiro {
+        top: -25px;
+      }
+
+      #overlay,
+      #mensagemFinal,
+      #novaChance,
+      #pegarBolsa {
+        font-size: 18px;
+        padding: 20px;
+      }
+
+      .closeBtn {
+        font-size: 22px;
+      }
+    }
+
+    #loader {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      display: none;
+      z-index: 1000;
     }
   </style>
 </head>
@@ -195,7 +245,7 @@
   <div id="roletaContainer">
     <div id="ponteiro"></div>
     <div id="roleta"></div>
-    <button id="girarBtn" style="margin-top: 20px;" onclick="girar()">Girar Roleta</button>
+    <button id="girarBtn" onclick="girar()">Girar Roleta</button>
   </div>
 
   <div id="overlay">
@@ -219,6 +269,10 @@
     <button onclick="alert('Bolsa resgatada!')">PEGAR BOLSA</button>
   </div>
 
+  <div id="loader">
+    <i class="fas fa-spinner fa-spin fa-3x"></i>
+  </div>
+
   <audio id="somRoleta" src="roleta.mp3"></audio>
   <audio id="somGanhou1" src="ganhou1.mp3"></audio>
   <audio id="somGanhou2" src="ganhou2.mp3"></audio>
@@ -233,42 +287,46 @@
     let mensagemFinal = document.getElementById("mensagemFinal");
     let textoFinal = document.getElementById("textoFinal");
     let pegarBolsa = document.getElementById("pegarBolsa");
+    let loader = document.getElementById("loader");
 
     let somRoleta = document.getElementById("somRoleta");
     let somGanhou1 = document.getElementById("somGanhou1");
     let somGanhou2 = document.getElementById("somGanhou2");
 
-   /*  function liberarRoleta() {
-      const codigo = document.getElementById("codigoInput").value.trim();
-      if (codigo === "123456") {
-        document.getElementById("codigoArea").style.display = "none";
-        document.getElementById("cursoArea").style.display = "block";
-      } else {
-        alert("Código inválido!");
-      }
-    } */
     function liberarRoleta() {
-    const codigo = document.getElementById("codigoInput").value.trim();
-    document.getElementById("codigoArea").style.display = "none";
-    document.getElementById("cursoArea").style.display = "block";
-}
+      const codigo = document.getElementById("codigoInput").value.trim();
+      document.getElementById("codigoArea").style.display = "none";
+      document.getElementById("cursoArea").style.display = "block";
+    }
 
     function primeiraRodada() {
       document.getElementById("cursoArea").style.display = "none";
       document.getElementById("roletaContainer").style.display = "block";
+      window.scrollTo(0, 0);
     }
 
     function girar() {
+      // Bloquear zoom e scroll
+      document.querySelector('meta[name="viewport"]').setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+      document.body.style.overflow = 'hidden';
+      
+      loader.style.display = 'block';
       somRoleta.play();
       document.getElementById("girarBtn").style.display = "none";
       roleta.style.transition = "none";
       roleta.style.transform = "rotate(0deg)";
+
       setTimeout(() => {
+        loader.style.display = 'none';
         let graus = etapa === 1 ? 3600 + 45 : 7200 + 135;
         roleta.style.transition = "transform 10s ease-out";
         roleta.style.transform = `rotate(${graus}deg)`;
 
         setTimeout(() => {
+          // Restaurar configurações do viewport
+          document.querySelector('meta[name="viewport"]').setAttribute('content', 'width=device-width, initial-scale=1.0');
+          document.body.style.overflow = 'auto';
+          
           if (etapa === 1) {
             somGanhou1.play();
             mensagemOverlay.innerHTML = "🎉 Você ganhou uma bolsa de <b>R$ 180</b> na matrícula!";
@@ -296,14 +354,15 @@
       document.getElementById("girarBtn").style.display = "block";
       roleta.style.transition = "none";
       roleta.style.transform = "rotate(0deg)";
+      window.scrollTo(0, 0);
     }
 
     function mostrarBolsa() {
       mensagemFinal.style.display = "none";
       pegarBolsa.style.display = "flex";
       pegarBolsa.classList.add("animated-fade");
+      window.scrollTo(0, 0);
     }
   </script>
 </body>
-
 </html>
